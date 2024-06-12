@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real-Time Chat with User Status</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    
+
     <style>
         .status-dot {
             height: 10px;
@@ -28,8 +29,20 @@
         <h1 class="text-center">Real-Time Chat</h1>
         <div class="row">
             <div class="col-md-12">
+                <form class="radio-group">
+                    <label>
+                        <input type="radio" name="group1" value="0" checked onclick="handleRadioChange(0)">
+                       Simple
+                    </label>
+                    <label>
+                        <input type="radio" name="group1" value="1" onclick="handleRadioChange(1)">
+                        Editor
+                    </label>
+                </form>
+
                 <input type="text" id="userName" value="@ViewBag.UserName" hidden />
                 <input type="text" class="form-control" id="messageInput" placeholder="Type your message"></input>
+                <div id="editorInput" style="display:none"></div>
                 <button class="btn btn-primary btn-block mt-2" onclick="sendMessage()">Send</button>
             </div>
         </div>
@@ -46,10 +59,26 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.11/signalr.min.js"></script>
+
+
     <script>
+        function handleRadioChange(val) { 
+            if (val == 1) {
+                $("#messageInput").css("display", "none");
+                $("#editorInput").css("display", "");
+            }
+            else {
+                $("#editorInput").css("display", "none");
+                $("#messageInput").css("display", "");
+            }
+        }
+        let editor = new FroalaEditor('#editorInput', {
+            toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize', 'color', 'backgroundColor', '|', 'align', 'formatOL', 'formatUL', 'outdent', 'indent', 'paragraphFormat', 'quote', 'insertHR', '|', 'insertLink', 'insertImage', 'insertVideo', 'insertFile', 'insertTable', '|', 'undo', 'redo', 'fullscreen'],
+        }, function () {
+        })
+       
         document.addEventListener("keypress", function (event) {
-            if (event.keyCode === 13) {
+            if (event.keyCode === 13 && document.querySelector('input[name="group1"]:checked').value == '0') {
                 sendMessage();
             }
         });
@@ -95,11 +124,12 @@
         connection.start().catch(err => console.error(err.toString()));
 
         function sendMessage() {
-            const messageInput = document.getElementById("messageInput").value.trim();
+            const messageInput = document.querySelector('input[name="group1"]:checked').value == '1' ? editor.html.get() : document.getElementById("messageInput").value.trim();
             if (messageInput !== '') {
                 const userName = $("#userName").val(); // Replace with actual user name logic
                 connection.invoke("SendMessage", userName, messageInput).catch(err => console.error(err.toString()));
                 document.getElementById("messageInput").value = '';
+                editor.html.set(null)
             } else {
                 alert("Please enter a message.");
             }

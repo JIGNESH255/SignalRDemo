@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "Real-Time Chat";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            padding-top: 5rem;
+        }
+
+        .container {
+            max-width: 800px;
+        }
+
+        #messagesList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+            #messagesList li {
+                margin-bottom: 10px;
+                padding: 10px;
+                border: 1px solid #ddd;
+                background-color: #f9f9f9;
+                border-radius: 5px;
+            }
+
+        .message-input {
+            margin-bottom: 10px;
+        }
+
+        .btn-send {
+            background-color: #007bff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Real-Time Chat</h1>
+        <div class="row">
+            <div class="col-md-12">
+                <input type="text" id="userName" value="@ViewBag.UserName" hidden/>
+                <input type="text" class="form-control message-input" id="messageInput" placeholder="Type your message">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <button class="btn btn-send btn-block" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <ul id="messagesList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.11/signalr.min.js"></script>
+    <script>
+        window.addEventListener('beforeunload',() => {
+            connection.invoke('disconnect');
+        })
+        document.addEventListener("keypress", function (event) {
+            if (event.keyCode === 13) {
+                sendMessage();
+            }
+        });
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .build();
+
+        // connection.on("ReceiveMessage", (user, message) => {
+        //     const msg = document.createElement("li");
+        //     msg.textContent = `${user}: ${message}`;
+        //     document.getElementById("messagesList").appendChild(msg);
+        // });
+
+        connection.on("ReceiveMessage", (user, message) => {
+            const msg = document.createElement("li");
+            msg.textContent = `${user}: ${message}`;
+
+            // Get the reference to the first child of messagesList (which is currently the oldest message)
+            const firstMessage = document.getElementById("messagesList").firstChild;
+
+            // Insert the new message before the first child
+            document.getElementById("messagesList").insertBefore(msg, firstMessage);
+        });
+
+        connection.start().catch(err => console.error(err.toString()));
+
+        function sendMessage() {
+            const messageInput = document.getElementById("messageInput").value.trim();
+            if (messageInput !== '') {
+                const userName = $("#userName").val(); // Retrieve user's name from session
+                connection.invoke("SendMessage", userName, messageInput).catch(err => console.error(err.toString()));
+                document.getElementById("messageInput").value = '';
+            } else {
+                alert("Please enter a message.");
+            }
+        }
+    </script>
+</body>
+</html>

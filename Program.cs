@@ -3,7 +3,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
-builder.Services.AddSession(); // Add session services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSession();
 
 var app = builder.Build();
 
@@ -18,10 +19,13 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseAuthorization();
-
 // Enable session middleware
 app.UseSession();
+
+// Add custom middleware for session handling
+app.UseMiddleware<SessionMiddleware>();
+
+app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
 {

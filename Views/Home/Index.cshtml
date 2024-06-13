@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Real-Time Chat with User Status</title>
-    
+
 
     <style>
         .status-dot {
@@ -22,17 +22,29 @@
         .offline {
             background-color: red;
         }
+
+        .chatbox {
+            /* background: darkgray; */
+            /* height: 35px; */
+            border-radius: 10px;
+            font-size: 18px;
+            padding: 3px 10px 1;
+        }
+
+        .liBulletHide {
+            list-style-type: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div>
         <h1 class="text-center">Real-Time Chat</h1>
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-4 p-5">
                 <form class="radio-group">
                     <label>
                         <input type="radio" name="group1" value="0" checked onclick="handleRadioChange(0)">
-                       Simple
+                        Simple
                     </label>
                     <label>
                         <input type="radio" name="group1" value="1" onclick="handleRadioChange(1)">
@@ -44,16 +56,14 @@
                 <input type="text" class="form-control" id="messageInput" placeholder="Type your message"></input>
                 <div id="editorInput" style="display:none"></div>
                 <button class="btn btn-primary btn-block mt-2" onclick="sendMessage()">Send</button>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <h3>Online Users</h3>
+                        <ul id="usersList"></ul>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <h3>Online Users</h3>
-                <ul id="usersList"></ul>
-            </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col-md-12">
+            <div class="col-md-8 p-5">
                 <ul id="messagesList"></ul>
             </div>
         </div>
@@ -62,7 +72,7 @@
 
 
     <script>
-        function handleRadioChange(val) { 
+        function handleRadioChange(val) {
             if (val == 1) {
                 $("#messageInput").css("display", "none");
                 $("#editorInput").css("display", "");
@@ -73,10 +83,31 @@
             }
         }
         let editor = new FroalaEditor('#editorInput', {
-            toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', 'fontFamily', 'fontSize', 'color', 'backgroundColor', '|', 'align', 'formatOL', 'formatUL', 'outdent', 'indent', 'paragraphFormat', 'quote', 'insertHR', '|', 'insertLink', 'insertImage', 'insertVideo', 'insertFile', 'insertTable', '|', 'undo', 'redo', 'fullscreen'],
+            toolbarButtons: {
+                moreText: {
+                    buttons: ['bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript'],
+                    buttonsVisible: 2
+                },
+                moreParagraph: {
+                    buttons: ['align', 'formatOL', 'formatUL', 'outdent', 'indent', 'paragraphFormat', 'quote', 'insertHR'],
+                    buttonsVisible: 0
+                },
+                moreRich: {
+                    buttons: ['insertLink', 'insertImage', 'insertVideo'],
+                    buttonsVisible: 3
+                },
+                moreMisc: {
+                    buttons: ['insertFile', 'insertTable'],
+                    buttonsVisible: 2
+                },
+                moreMisc: {
+                    buttons: ['undo', 'redo', 'fullscreen'],
+                    buttonsVisible: 3
+                }
+            },
         }, function () {
         })
-       
+
         document.addEventListener("keypress", function (event) {
             if (event.keyCode === 13 && document.querySelector('input[name="group1"]:checked').value == '0') {
                 sendMessage();
@@ -87,11 +118,20 @@
             .build();
 
         connection.on("ReceiveMessage", (user, message, isOnline) => {
+            debugger;
+            const curruser = $("#userName").val();
             const msg = document.createElement("li");
-            msg.innerHTML = `<span></span>${user}: ${message}`;// class="status-dot ${isOnline ? 'online' : 'offline'}"
+            if (curruser == user) {
+                msg.classList.add("liBulletHide");
+                msg.innerHTML = `<div style="text-align:right;">${message}</div>`;
+            }
+            else {
+                msg.innerHTML = `<div><b>${user}:</b></div><div>${message}</div>`;// class="status-dot ${isOnline ? 'online' : 'offline'}"
+            }
+            msg.classList.add('chatbox');
 
-            const firstMessage = document.getElementById("messagesList").firstChild;
-            document.getElementById("messagesList").insertBefore(msg, firstMessage);
+            // const firstMessage = document.getElementById("messagesList").firstChild;
+            document.getElementById("messagesList").appendChild(msg);
         });
 
         connection.on("UpdateUserList", (users) => {
@@ -124,7 +164,7 @@
         connection.start().catch(err => console.error(err.toString()));
 
         function sendMessage() {
-            const messageInput = document.querySelector('input[name="group1"]:checked').value == '1' ? editor.html.get() : document.getElementById("messageInput").value.trim();
+            const messageInput = document.querySelector('input[name="group1"]:checked').value == '1' ? editor.html.get().replace('<p data-f-id="pbf" style="text-align: center; font-size: 14px; margin-top: 30px; opacity: 0.65; font-family: sans-serif;">Powered by <a href="https://www.froala.com/wysiwyg-editor?pb=1" title="Froala Editor">Froala Editor</a></p>', '') : document.getElementById("messageInput").value.trim();
             if (messageInput !== '') {
                 const userName = $("#userName").val(); // Replace with actual user name logic
                 connection.invoke("SendMessage", userName, messageInput).catch(err => console.error(err.toString()));

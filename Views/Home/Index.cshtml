@@ -278,7 +278,6 @@
             .build();
 
         connection.on("ReceiveMessage", (user, message, isOnline) => {
-            debugger;
             const curruser = document.getElementById("userName").value;
             const msg = document.createElement("li");
             msg.classList.add("clearfix");

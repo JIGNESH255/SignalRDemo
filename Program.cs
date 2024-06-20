@@ -2,7 +2,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(); // added signalR service
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession();
 
